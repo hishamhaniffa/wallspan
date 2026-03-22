@@ -31,7 +31,11 @@ Setting a wallpaper that spans across multiple monitors on macOS shouldn't requi
 2. Unzip and move `WallSpan.app` to your Applications folder
 3. Double-click to launch
 
-> On first launch, macOS may block the app since it's unsigned. Go to **System Settings → Privacy & Security** and click **Open Anyway**.
+> **Important:** macOS will block the app since it's unsigned. After unzipping, run this in Terminal before opening:
+> ```bash
+> sudo xattr -cr /Applications/WallSpan.app
+> ```
+> If you still see a warning, go to **System Settings → Privacy & Security** and click **Open Anyway**.
 
 ### Build from source
 
