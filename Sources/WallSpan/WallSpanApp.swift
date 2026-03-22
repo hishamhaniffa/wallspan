@@ -13,15 +13,20 @@ struct WallSpanApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem?
+    private var mainWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
 
-        if let window = NSApp.windows.first {
-            window.makeKeyAndOrderFront(nil)
+        // Grab the main window and prevent it from being released on close
+        DispatchQueue.main.async {
+            if let window = NSApp.windows.first(where: { $0.contentView != nil }) {
+                self.mainWindow = window
+                window.delegate = self
+            }
         }
 
         // Create menu bar icon
@@ -38,26 +43,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = menu
     }
 
+    // Hide the window instead of closing/destroying it
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        sender.orderOut(nil)
+        NSApp.setActivationPolicy(.accessory)
+        return false
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag {
-            for window in NSApp.windows {
-                window.makeKeyAndOrderFront(nil)
-            }
-        }
+        if !flag { showWindow() }
         return true
     }
 
-    /// When the last window closes, hide from dock but keep running in menu bar
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        NSApp.setActivationPolicy(.accessory)
         return false
     }
 
     @objc private func showWindow() {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        for window in NSApp.windows {
+        if let window = mainWindow {
             window.makeKeyAndOrderFront(nil)
+        } else {
+            // Fallback: find any window
+            for window in NSApp.windows where window.contentView != nil {
+                window.makeKeyAndOrderFront(nil)
+                mainWindow = window
+                window.delegate = self
+                break
+            }
         }
     }
 
