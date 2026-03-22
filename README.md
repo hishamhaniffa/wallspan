@@ -1,5 +1,9 @@
 # WallSpan
 
+<p align="center">
+  <img src="icon.svg" width="200" alt="WallSpan icon"/>
+</p>
+
 A simple macOS app to span a single wallpaper across multiple monitors.
 
 ![macOS](https://img.shields.io/badge/macOS-13%2B-blue) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![License](https://img.shields.io/badge/license-MIT-green)

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="40%" stop-color="#16213e"/>
+      <stop offset="70%" stop-color="#e94560"/>
+      <stop offset="100%" stop-color="#f7b731"/>
+    </linearGradient>
+    <linearGradient id="mountain1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d3436"/>
+      <stop offset="100%" stop-color="#636e72"/>
+    </linearGradient>
+    <linearGradient id="mountain2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e272e"/>
+      <stop offset="100%" stop-color="#485460"/>
+    </linearGradient>
+    <clipPath id="leftScreen">
+      <rect x="28" y="120" width="200" height="130" rx="8"/>
+    </clipPath>
+    <clipPath id="rightScreen">
+      <rect x="248" y="120" width="200" height="130" rx="8"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded app background -->
+  <rect width="512" height="512" rx="100" fill="#0f0f1a"/>
+
+  <!-- Left monitor frame -->
+  <rect x="20" y="112" width="216" height="146" rx="12" fill="#3d3d5c" stroke="#5a5a8a" stroke-width="2"/>
+  <!-- Right monitor frame -->
+  <rect x="240" y="112" width="216" height="146" rx="12" fill="#3d3d5c" stroke="#5a5a8a" stroke-width="2"/>
+
+  <!-- Landscape scene clipped to left monitor -->
+  <g clip-path="url(#leftScreen)">
+    <!-- Sky gradient -->
+    <rect x="28" y="120" width="200" height="130" fill="url(#sky)"/>
+    <!-- Sun -->
+    <circle cx="168" cy="175" r="22" fill="#f7b731" opacity="0.9"/>
+    <circle cx="168" cy="175" r="18" fill="#f9ca24"/>
+    <!-- Far mountains -->
+    <polygon points="28,210 68,170 108,195 148,160 188,185 228,165 228,250 28,250" fill="url(#mountain2)" opacity="0.7"/>
+    <!-- Near mountains -->
+    <polygon points="28,220 58,185 98,210 128,178 168,205 198,188 228,200 228,250 28,250" fill="url(#mountain1)"/>
+  </g>
+
+  <!-- Same landscape scene clipped to right monitor (continuation) -->
+  <g clip-path="url(#rightScreen)">
+    <!-- Sky gradient shifted -->
+    <rect x="248" y="120" width="200" height="130" fill="url(#sky)"/>
+    <!-- Sun partially visible from left -->
+    <!-- Far mountains continuing -->
+    <polygon points="248,210 278,175 318,200 358,165 398,190 438,170 448,195 448,250 248,250" fill="url(#mountain2)" opacity="0.7"/>
+    <!-- Near mountains continuing -->
+    <polygon points="248,220 278,195 308,210 338,182 378,208 418,190 448,205 448,250 248,250" fill="url(#mountain1)"/>
+  </g>
+
+  <!-- Monitor bezels (inner border) -->
+  <rect x="28" y="120" width="200" height="130" rx="8" fill="none" stroke="#2a2a4a" stroke-width="1.5"/>
+  <rect x="248" y="120" width="200" height="130" rx="8" fill="none" stroke="#2a2a4a" stroke-width="1.5"/>
+
+  <!-- Monitor stands -->
+  <rect x="98" y="258" width="40" height="20" rx="2" fill="#3d3d5c"/>
+  <rect x="78" y="275" width="80" height="6" rx="3" fill="#3d3d5c"/>
+  <rect x="318" y="258" width="40" height="20" rx="2" fill="#3d3d5c"/>
+  <rect x="298" y="275" width="80" height="6" rx="3" fill="#3d3d5c"/>
+
+  <!-- Spanning arrow between monitors -->
+  <line x1="150" y1="310" x2="326" y2="310" stroke="#e94560" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="322,303 336,310 322,317" fill="#e94560"/>
+  <polygon points="154,303 140,310 154,317" fill="#e94560"/>
+
+  <!-- App name -->
+  <text x="256" y="370" text-anchor="middle" font-family="-apple-system, SF Pro Display, Helvetica, Arial, sans-serif" font-size="48" font-weight="700" fill="#ffffff" letter-spacing="3">WallSpan</text>
+
+  <!-- Tagline -->
+  <text x="256" y="405" text-anchor="middle" font-family="-apple-system, SF Pro Display, Helvetica, Arial, sans-serif" font-size="16" fill="#8a8aaa" letter-spacing="1">span wallpapers across displays</text>
+</svg>
