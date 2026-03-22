@@ -16,6 +16,8 @@ Setting a wallpaper that spans across multiple monitors on macOS shouldn't requi
 
 - **Span across monitors** — splits a single image across all displays with proper aspect-ratio cropping
 - **Same on all** — set one image on every monitor
+- **Dynamic wallpaper support** — respects macOS solar-based dynamic wallpapers (e.g. The Cliffs, Monterey Graphic). When spanning, automatically picks the correct time-of-day frame and updates it throughout the day
+- **Menu bar app** — lives in your menu bar and keeps running in the background to update dynamic wallpapers even after closing the window
 - **Monitor detection** — automatically detects all connected displays and shows their arrangement
 - **System wallpapers** — browse wallpapers already on your Mac (full-resolution only)
 - **External images** — add any image from disk
@@ -25,7 +27,7 @@ Setting a wallpaper that spans across multiple monitors on macOS shouldn't requi
 
 ### Download (easiest)
 
-1. Grab `WallSpan-v1.0.0-macOS.zip` from the [Releases](https://github.com/hishamhaniffa/wallspan/releases) page
+1. Grab the latest `.zip` from the [Releases](https://github.com/hishamhaniffa/wallspan/releases) page
 2. Unzip and move `WallSpan.app` to your Applications folder
 3. Double-click to launch
 
@@ -45,6 +47,7 @@ The binary will be at `.build/release/WallSpan`. Run it directly or use the incl
 
 - Uses `NSWorkspace.setDesktopImageURL` to set wallpapers per-screen
 - For spanning, `ImageSplitter` computes each monitor's portion of the image using cover/fill scaling (maintains aspect ratio, no stretching), crops via CoreGraphics, and sets each piece on its corresponding display
+- For dynamic wallpapers, `SolarCalculator` reads the `apple_desktop:solar` XMP metadata embedded in the HEIC file, calculates the sun's position based on your timezone, and selects the correct frame. A background timer checks every 15 minutes and updates the span when the frame changes
 - Monitor arrangement is read from `NSScreen.screens` with display UUIDs mapped via `CGDisplayCreateUUIDFromDisplayID`
 
 ## Requirements

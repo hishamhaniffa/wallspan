@@ -9,6 +9,8 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var statusMessage: String?
+    @State private var dynamicTimer: Timer?
+    @State private var lastFrameIndex: Int = -1
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,9 +55,16 @@ struct ContentView: View {
                             Text(item.name)
                                 .font(.caption.bold())
                                 .lineLimit(1)
-                            Text(item.category.rawValue)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                            HStack(spacing: 4) {
+                                Text(item.category.rawValue)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                if dynamicTimer != nil {
+                                    Text("· Dynamic")
+                                        .font(.caption2)
+                                        .foregroundColor(.orange)
+                                }
+                            }
                         }
                     }
                 } else {
@@ -97,6 +106,9 @@ struct ContentView: View {
         .onAppear {
             catalog.reload()
         }
+        .onDisappear {
+            stopDynamicTimer()
+        }
         .alert("Error", isPresented: $showError) {
             Button("OK") {}
         } message: {
@@ -119,23 +131,29 @@ struct ContentView: View {
     private func applyWallpaper() {
         guard let item = selectedItem else { return }
 
+        // Stop any existing dynamic timer
+        stopDynamicTimer()
+
         do {
             switch wallpaperMode {
             case .sameOnAll:
                 try WallpaperService.setSameOnAll(imageURL: item.url)
             case .spanned:
                 try WallpaperService.setSpanned(imageURL: item.url, monitors: screenService.monitors)
-            }
-            withAnimation {
-                statusMessage = "Applied!"
-            }
-            // Clear status after 2 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                withAnimation {
-                    statusMessage = nil
+
+                // If this is a dynamic wallpaper, start a timer to update the frame
+                let frames = ImageSplitter.frameCount(for: item.url)
+                if frames > 1 {
+                    startDynamicTimer(imageURL: item.url, totalFrames: frames)
                 }
             }
-            // Refresh catalog to update current wallpapers
+
+            withAnimation {
+                statusMessage = dynamicTimer != nil ? "Applied! (dynamic — updates with time)" : "Applied!"
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                withAnimation { statusMessage = nil }
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 catalog.reload()
             }
@@ -143,5 +161,32 @@ struct ContentView: View {
             errorMessage = error.localizedDescription
             showError = true
         }
+    }
+
+    // MARK: - Dynamic wallpaper timer
+
+    private func startDynamicTimer(imageURL: URL, totalFrames: Int) {
+        lastFrameIndex = ImageSplitter.currentFrameIndex(for: imageURL)
+
+        // Check every 15 minutes if the solar frame needs to change
+        dynamicTimer = Timer.scheduledTimer(withTimeInterval: 900, repeats: true) { _ in
+            let newIndex = ImageSplitter.currentFrameIndex(for: imageURL)
+            guard newIndex != lastFrameIndex else { return }
+            lastFrameIndex = newIndex
+
+            do {
+                try WallpaperService.setSpanned(
+                    imageURL: imageURL,
+                    monitors: screenService.monitors
+                )
+            } catch {
+                // Silently fail on timer updates
+            }
+        }
+    }
+
+    private func stopDynamicTimer() {
+        dynamicTimer?.invalidate()
+        dynamicTimer = nil
     }
 }

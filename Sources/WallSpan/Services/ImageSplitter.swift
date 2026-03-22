@@ -1,5 +1,6 @@
 import AppKit
 import CoreGraphics
+import ImageIO
 import UniformTypeIdentifiers
 
 enum ImageSplitError: LocalizedError {
@@ -19,12 +20,45 @@ enum ImageSplitError: LocalizedError {
 }
 
 struct ImageSplitter {
+
+    /// Returns the number of frames in a HEIC image (1 for static, 8+ for dynamic)
+    static func frameCount(for imageURL: URL) -> Int {
+        guard let src = CGImageSourceCreateWithURL(imageURL as CFURL, nil) else { return 1 }
+        return CGImageSourceGetCount(src)
+    }
+
+    /// Returns true if the image has dynamic solar metadata
+    static func isDynamic(_ imageURL: URL) -> Bool {
+        return SolarCalculator.extractSolarMetadata(from: imageURL) != nil
+    }
+
+    /// Returns the correct frame index for the current time using solar metadata.
+    /// Falls back to frame 0 for non-dynamic images.
+    static func currentFrameIndex(for imageURL: URL) -> Int {
+        guard let metadata = SolarCalculator.extractSolarMetadata(from: imageURL) else { return 0 }
+        return SolarCalculator.currentFrameIndex(for: metadata)
+    }
+
     /// Splits a source image into portions for each monitor based on their arrangement.
-    /// Uses "cover" scaling: the image fills the entire combined monitor area while maintaining
-    /// aspect ratio, then each monitor's portion is cropped from that.
-    static func splitImage(_ imageURL: URL, across monitors: [MonitorInfo]) throws -> [Int: URL] {
-        guard let imageSource = CGImageSourceCreateWithURL(imageURL as CFURL, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {
+    /// For dynamic HEIC wallpapers, picks the correct solar frame for the current time.
+    static func splitImage(
+        _ imageURL: URL,
+        across monitors: [MonitorInfo],
+        frameIndex: Int? = nil
+    ) throws -> [Int: URL] {
+        guard let src = CGImageSourceCreateWithURL(imageURL as CFURL, nil) else {
+            throw ImageSplitError.cannotLoadImage
+        }
+
+        let totalFrames = CGImageSourceGetCount(src)
+        let idx: Int
+        if let forced = frameIndex {
+            idx = min(forced, totalFrames - 1)
+        } else {
+            idx = currentFrameIndex(for: imageURL)
+        }
+
+        guard let cgImage = CGImageSourceCreateImageAtIndex(src, idx, nil) else {
             throw ImageSplitError.cannotLoadImage
         }
 
@@ -36,11 +70,10 @@ struct ImageSplitter {
         let totalW = boundingRect.width
         let totalH = boundingRect.height
 
-        // "Cover" scaling: find how the image maps onto the total monitor area
-        // Scale so the image fully covers the combined area (no letterboxing)
+        // "Cover" scaling: scale so the image fully covers the combined area
         let scaleX = imageW / totalW
         let scaleY = imageH / totalH
-        let coverScale = min(scaleX, scaleY)  // min = cover (image overflows in one dimension)
+        let coverScale = min(scaleX, scaleY)
 
         // The visible portion of the image (centered) in image pixel coordinates
         let visibleW = totalW * coverScale
@@ -64,14 +97,12 @@ struct ImageSplitter {
         var results: [Int: URL] = [:]
 
         for monitor in monitors {
-            // Monitor position relative to bounding rect (in screen points)
             let monX = monitor.frame.origin.x - boundingRect.origin.x
             let monY = monitor.frame.origin.y - boundingRect.origin.y
             let monW = monitor.frame.width
             let monH = monitor.frame.height
 
-            // Map to image pixel coordinates within the visible area
-            // Flip Y: macOS screen origin is bottom-left, CGImage origin is top-left
+            // Map to image pixel coordinates; flip Y (macOS bottom-left → CGImage top-left)
             let cropX = offsetX + monX * coverScale
             let cropY = offsetY + (totalH - monY - monH) * coverScale
             let cropW = monW * coverScale
